@@ -1,0 +1,840 @@
+{
+ "built": "2026-11-23",
+ "segments_in_source": 122331,
+ "lines_kept": 121139,
+ "edges": 173294,
+ "graded_edges": 169284,
+ "nodes": 137475,
+ "graded_share": 0.999,
+ "largest_component_share": 0.7881,
+ "pieces_filled": 2323,
+ "pieces_cliff": 169,
+ "near_structure_edges": 17151,
+ "near_structure_miles": 471.9,
+ "cliff_miles": 4.6,
+ "skipped": {
+  "not walkable type": 9397,
+  "vehicles only": 2541,
+  "not built": 39
+ },
+ "params": {
+  "step_m": 5.0,
+  "ext_m": 60.0,
+  "fill_m": 120.0,
+  "cut_m": 40.0,
+  "max_piece_m": 100.0
+ },
+ "city": {
+  "miles": 6516.0,
+  "band_miles": {
+   "flat": 5271.8,
+   "gentle": 1031.4,
+   "noticeable": 176.6,
+   "steep": 30.0,
+   "very steep": 6.3
+  },
+  "share": {
+   "flat": 0.809,
+   "gentle": 0.1583,
+   "noticeable": 0.0271,
+   "steep": 0.0046,
+   "very steep": 0.001
+  }
+ },
+ "boroughs": {
+  "Manhattan": {
+   "miles": 546.8,
+   "band_miles": {
+    "flat": 438.3,
+    "gentle": 90.7,
+    "noticeable": 14.7,
+    "steep": 2.7,
+    "very steep": 0.3
+   },
+   "share": {
+    "flat": 0.8016,
+    "gentle": 0.1659,
+    "noticeable": 0.027,
+    "steep": 0.005,
+    "very steep": 0.0005
+   }
+  },
+  "Bronx": {
+   "miles": 848.0,
+   "band_miles": {
+    "flat": 599.2,
+    "gentle": 196.6,
+    "noticeable": 43.9,
+    "steep": 7.2,
+    "very steep": 1.0
+   },
+   "share": {
+    "flat": 0.7066,
+    "gentle": 0.2319,
+    "noticeable": 0.0518,
+    "steep": 0.0084,
+    "very steep": 0.0012
+   }
+  },
+  "Brooklyn": {
+   "miles": 1678.2,
+   "band_miles": {
+    "flat": 1515.1,
+    "gentle": 152.9,
+    "noticeable": 9.6,
+    "steep": 0.5,
+    "very steep": 0.2
+   },
+   "share": {
+    "flat": 0.9028,
+    "gentle": 0.0911,
+    "noticeable": 0.0057,
+    "steep": 0.0003,
+    "very steep": 0.0001
+   }
+  },
+  "Queens": {
+   "miles": 2473.4,
+   "band_miles": {
+    "flat": 2074.0,
+    "gentle": 347.2,
+    "noticeable": 47.4,
+    "steep": 4.2,
+    "very steep": 0.6
+   },
+   "share": {
+    "flat": 0.8385,
+    "gentle": 0.1404,
+    "noticeable": 0.0192,
+    "steep": 0.0017,
+    "very steep": 0.0003
+   }
+  },
+  "Staten Island": {
+   "miles": 969.6,
+   "band_miles": {
+    "flat": 645.1,
+    "gentle": 244.0,
+    "noticeable": 61.0,
+    "steep": 15.4,
+    "very steep": 4.1
+   },
+   "share": {
+    "flat": 0.6653,
+    "gentle": 0.2517,
+    "noticeable": 0.0629,
+    "steep": 0.0159,
+    "very steep": 0.0043
+   }
+  }
+ },
+ "steepest": [
+  {
+   "name": "CHESTNUT PL",
+   "boro": "Staten Island",
+   "grade": 20.0,
+   "raw_grade": 19.8,
+   "length_ft": 190,
+   "rise_ft": 38,
+   "lon": -74.09305,
+   "lat": 40.63666
+  },
+  {
+   "name": "CENTRE AVE",
+   "boro": "Staten Island",
+   "grade": 19.5,
+   "raw_grade": 19.5,
+   "length_ft": 231,
+   "rise_ft": 45,
+   "lon": -74.0872,
+   "lat": 40.61847
+  },
+  {
+   "name": "HIGHVIEW AVE",
+   "boro": "Staten Island",
+   "grade": 19.4,
+   "raw_grade": 19.4,
+   "length_ft": 240,
+   "rise_ft": 47,
+   "lon": -74.08991,
+   "lat": 40.64468
+  },
+  {
+   "name": "RIGBY AVE",
+   "boro": "Staten Island",
+   "grade": 18.4,
+   "raw_grade": 18.4,
+   "length_ft": 182,
+   "rise_ft": 33,
+   "lon": -74.1431,
+   "lat": 40.57449
+  },
+  {
+   "name": "STONE ST",
+   "boro": "Staten Island",
+   "grade": 17.0,
+   "raw_grade": 17.0,
+   "length_ft": 222,
+   "rise_ft": 38,
+   "lon": -74.08322,
+   "lat": 40.62761
+  },
+  {
+   "name": "PEARL ST",
+   "boro": "Staten Island",
+   "grade": 16.9,
+   "raw_grade": 16.9,
+   "length_ft": 146,
+   "rise_ft": 25,
+   "lon": -74.0849,
+   "lat": 40.62709
+  },
+  {
+   "name": "BARING PL",
+   "boro": "Staten Island",
+   "grade": 16.5,
+   "raw_grade": 16.5,
+   "length_ft": 183,
+   "rise_ft": 30,
+   "lon": -74.08636,
+   "lat": 40.6189
+  },
+  {
+   "name": "W 254 ST",
+   "boro": "Bronx",
+   "grade": 16.5,
+   "raw_grade": 16.5,
+   "length_ft": 209,
+   "rise_ft": 35,
+   "lon": -73.91051,
+   "lat": 40.90319
+  },
+  {
+   "name": "WETMORE RD",
+   "boro": "Staten Island",
+   "grade": 16.4,
+   "raw_grade": 16.4,
+   "length_ft": 275,
+   "rise_ft": 45,
+   "lon": -74.0913,
+   "lat": 40.6118
+  },
+  {
+   "name": "OAKLAND TER",
+   "boro": "Staten Island",
+   "grade": 16.4,
+   "raw_grade": 16.4,
+   "length_ft": 253,
+   "rise_ft": 42,
+   "lon": -74.08765,
+   "lat": 40.62033
+  },
+  {
+   "name": "YORK TER",
+   "boro": "Staten Island",
+   "grade": 16.2,
+   "raw_grade": 16.2,
+   "length_ft": 184,
+   "rise_ft": 30,
+   "lon": -74.08905,
+   "lat": 40.64498
+  },
+  {
+   "name": "E BUCHANAN ST",
+   "boro": "Staten Island",
+   "grade": 16.1,
+   "raw_grade": 16.1,
+   "length_ft": 167,
+   "rise_ft": 27,
+   "lon": -74.09136,
+   "lat": 40.64358
+  },
+  {
+   "name": "LYMAN PL",
+   "boro": "Staten Island",
+   "grade": 16.1,
+   "raw_grade": 16.1,
+   "length_ft": 182,
+   "rise_ft": 29,
+   "lon": -74.09654,
+   "lat": 40.60501
+  },
+  {
+   "name": "WILLOW ST",
+   "boro": "Queens",
+   "grade": 16.1,
+   "raw_grade": 16.1,
+   "length_ft": 269,
+   "rise_ft": 43,
+   "lon": -73.7491,
+   "lat": 40.76977
+  },
+  {
+   "name": "EDGAR PL",
+   "boro": "Staten Island",
+   "grade": 15.6,
+   "raw_grade": 15.4,
+   "length_ft": 205,
+   "rise_ft": 32,
+   "lon": -74.093,
+   "lat": 40.60544
+  },
+  {
+   "name": "SHELTERVIEW DR",
+   "boro": "Staten Island",
+   "grade": 15.4,
+   "raw_grade": 15.4,
+   "length_ft": 254,
+   "rise_ft": 39,
+   "lon": -74.08615,
+   "lat": 40.62445
+  },
+  {
+   "name": "W 169 ST",
+   "boro": "Bronx",
+   "grade": 15.3,
+   "raw_grade": 15.4,
+   "length_ft": 268,
+   "rise_ft": 41,
+   "lon": -73.92214,
+   "lat": 40.8391
+  },
+  {
+   "name": "RIDGE RD",
+   "boro": "Queens",
+   "grade": 15.3,
+   "raw_grade": 15.3,
+   "length_ft": 155,
+   "rise_ft": 24,
+   "lon": -73.7461,
+   "lat": 40.77472
+  },
+  {
+   "name": "SCRIBNER AVE",
+   "boro": "Staten Island",
+   "grade": 15.1,
+   "raw_grade": 15.1,
+   "length_ft": 263,
+   "rise_ft": 40,
+   "lon": -74.0822,
+   "lat": 40.6385
+  },
+  {
+   "name": "PARK LN",
+   "boro": "Queens",
+   "grade": 15.0,
+   "raw_grade": 15.0,
+   "length_ft": 240,
+   "rise_ft": 36,
+   "lon": -73.74666,
+   "lat": 40.77502
+  },
+  {
+   "name": "ARNOLD ST",
+   "boro": "Staten Island",
+   "grade": 15.0,
+   "raw_grade": 14.9,
+   "length_ft": 210,
+   "rise_ft": 31,
+   "lon": -74.08852,
+   "lat": 40.63908
+  },
+  {
+   "name": "DUTCHESS AVE",
+   "boro": "Staten Island",
+   "grade": 14.9,
+   "raw_grade": 14.9,
+   "length_ft": 250,
+   "rise_ft": 37,
+   "lon": -74.09649,
+   "lat": 40.59743
+  },
+  {
+   "name": "CUNARD PL",
+   "boro": "Staten Island",
+   "grade": 14.7,
+   "raw_grade": 14.7,
+   "length_ft": 286,
+   "rise_ft": 42,
+   "lon": -74.08839,
+   "lat": 40.61246
+  },
+  {
+   "name": "AVON PL",
+   "boro": "Staten Island",
+   "grade": 14.6,
+   "raw_grade": 14.6,
+   "length_ft": 263,
+   "rise_ft": 38,
+   "lon": -74.08297,
+   "lat": 40.63503
+  },
+  {
+   "name": "OCCIDENT AVE",
+   "boro": "Staten Island",
+   "grade": 14.5,
+   "raw_grade": 14.5,
+   "length_ft": 312,
+   "rise_ft": 45,
+   "lon": -74.08346,
+   "lat": 40.62901
+  },
+  {
+   "name": "FIEDLER AVE",
+   "boro": "Staten Island",
+   "grade": 14.4,
+   "raw_grade": 14.4,
+   "length_ft": 142,
+   "rise_ft": 21,
+   "lon": -74.08089,
+   "lat": 40.63587
+  },
+  {
+   "name": "W 231 ST",
+   "boro": "Bronx",
+   "grade": 14.3,
+   "raw_grade": 14.3,
+   "length_ft": 209,
+   "rise_ft": 30,
+   "lon": -73.91961,
+   "lat": 40.88493
+  },
+  {
+   "name": "126 ST",
+   "boro": "Queens",
+   "grade": 14.2,
+   "raw_grade": 14.2,
+   "length_ft": 205,
+   "rise_ft": 29,
+   "lon": -73.84168,
+   "lat": 40.79282
+  },
+  {
+   "name": "BARD AVE",
+   "boro": "Staten Island",
+   "grade": 14.2,
+   "raw_grade": 14.2,
+   "length_ft": 152,
+   "rise_ft": 22,
+   "lon": -74.10423,
+   "lat": 40.62349
+  },
+  {
+   "name": "PETER CT",
+   "boro": "Staten Island",
+   "grade": 14.1,
+   "raw_grade": 14.1,
+   "length_ft": 273,
+   "rise_ft": 39,
+   "lon": -74.1021,
+   "lat": 40.59308
+  },
+  {
+   "name": "ANDERSON AVE",
+   "boro": "Bronx",
+   "grade": 14.1,
+   "raw_grade": 14.1,
+   "length_ft": 168,
+   "rise_ft": 24,
+   "lon": -73.92823,
+   "lat": 40.83079
+  },
+  {
+   "name": "GROVE ST",
+   "boro": "Staten Island",
+   "grade": 14.0,
+   "raw_grade": 14.0,
+   "length_ft": 234,
+   "rise_ft": 33,
+   "lon": -74.08124,
+   "lat": 40.62702
+  },
+  {
+   "name": "RICHMOND HILL RD",
+   "boro": "Staten Island",
+   "grade": 14.0,
+   "raw_grade": 14.0,
+   "length_ft": 232,
+   "rise_ft": 32,
+   "lon": -74.14699,
+   "lat": 40.57357
+  },
+  {
+   "name": "SPAULDING LN",
+   "boro": "Bronx",
+   "grade": 14.0,
+   "raw_grade": 14.0,
+   "length_ft": 223,
+   "rise_ft": 31,
+   "lon": -73.91252,
+   "lat": 40.89646
+  },
+  {
+   "name": "MONROE AVE",
+   "boro": "Staten Island",
+   "grade": 13.9,
+   "raw_grade": 13.9,
+   "length_ft": 310,
+   "rise_ft": 43,
+   "lon": -74.07955,
+   "lat": 40.64145
+  },
+  {
+   "name": "NICHOLAS ST",
+   "boro": "Staten Island",
+   "grade": 13.8,
+   "raw_grade": 13.9,
+   "length_ft": 235,
+   "rise_ft": 32,
+   "lon": -74.08126,
+   "lat": 40.64633
+  },
+  {
+   "name": "DELAWARE ST",
+   "boro": "Staten Island",
+   "grade": 13.7,
+   "raw_grade": 13.7,
+   "length_ft": 208,
+   "rise_ft": 29,
+   "lon": -74.10051,
+   "lat": 40.59432
+  },
+  {
+   "name": "PROSPECT AVE",
+   "boro": "Staten Island",
+   "grade": 13.7,
+   "raw_grade": 13.7,
+   "length_ft": 193,
+   "rise_ft": 27,
+   "lon": -74.08833,
+   "lat": 40.64022
+  },
+  {
+   "name": "PARK LN",
+   "boro": "Staten Island",
+   "grade": 13.7,
+   "raw_grade": 13.7,
+   "length_ft": 177,
+   "rise_ft": 24,
+   "lon": -74.08918,
+   "lat": 40.62016
+  },
+  {
+   "name": "CHERRY ST",
+   "boro": "Queens",
+   "grade": 13.7,
+   "raw_grade": 13.7,
+   "length_ft": 221,
+   "rise_ft": 30,
+   "lon": -73.74904,
+   "lat": 40.771
+  },
+  {
+   "name": "HIGHLAND AVE",
+   "boro": "Staten Island",
+   "grade": 13.6,
+   "raw_grade": 13.6,
+   "length_ft": 320,
+   "rise_ft": 44,
+   "lon": -74.09818,
+   "lat": 40.619
+  },
+  {
+   "name": "LONGVIEW RD",
+   "boro": "Staten Island",
+   "grade": 13.6,
+   "raw_grade": 13.6,
+   "length_ft": 252,
+   "rise_ft": 34,
+   "lon": -74.09186,
+   "lat": 40.61096
+  },
+  {
+   "name": "CEDAR TER",
+   "boro": "Staten Island",
+   "grade": 13.6,
+   "raw_grade": 13.6,
+   "length_ft": 249,
+   "rise_ft": 34,
+   "lon": -74.08917,
+   "lat": 40.61389
+  },
+  {
+   "name": "OCEANVIEW LN",
+   "boro": "Staten Island",
+   "grade": 13.5,
+   "raw_grade": 13.5,
+   "length_ft": 149,
+   "rise_ft": 20,
+   "lon": -74.10239,
+   "lat": 40.60335
+  },
+  {
+   "name": "CUNARD AVE",
+   "boro": "Staten Island",
+   "grade": 13.5,
+   "raw_grade": 13.5,
+   "length_ft": 202,
+   "rise_ft": 27,
+   "lon": -74.08796,
+   "lat": 40.61446
+  },
+  {
+   "name": "BISMARK AVE",
+   "boro": "Staten Island",
+   "grade": 13.5,
+   "raw_grade": 13.4,
+   "length_ft": 251,
+   "rise_ft": 34,
+   "lon": -74.08495,
+   "lat": 40.63987
+  },
+  {
+   "name": "ESMAC CT N",
+   "boro": "Staten Island",
+   "grade": 13.4,
+   "raw_grade": 13.4,
+   "length_ft": 177,
+   "rise_ft": 24,
+   "lon": -74.10521,
+   "lat": 40.59477
+  },
+  {
+   "name": "KINGSLAND PL",
+   "boro": "Bronx",
+   "grade": 13.4,
+   "raw_grade": 13.4,
+   "length_ft": 247,
+   "rise_ft": 33,
+   "lon": -73.91221,
+   "lat": 40.85165
+  },
+  {
+   "name": "LONGVIEW PL",
+   "boro": "Bronx",
+   "grade": 13.4,
+   "raw_grade": 13.4,
+   "length_ft": 163,
+   "rise_ft": 22,
+   "lon": -73.90259,
+   "lat": 40.90061
+  },
+  {
+   "name": "CARLYLE ST",
+   "boro": "Staten Island",
+   "grade": 13.4,
+   "raw_grade": 13.4,
+   "length_ft": 286,
+   "rise_ft": 38,
+   "lon": -74.08719,
+   "lat": 40.64198
+  },
+  {
+   "name": "BEEBE ST",
+   "boro": "Staten Island",
+   "grade": 13.3,
+   "raw_grade": 13.3,
+   "length_ft": 200,
+   "rise_ft": 27,
+   "lon": -74.10282,
+   "lat": 40.60527
+  },
+  {
+   "name": "NEVADA AVE",
+   "boro": "Staten Island",
+   "grade": 13.3,
+   "raw_grade": 13.3,
+   "length_ft": 230,
+   "rise_ft": 31,
+   "lon": -74.12619,
+   "lat": 40.58086
+  },
+  {
+   "name": "HAMILTON AVE",
+   "boro": "Staten Island",
+   "grade": 13.3,
+   "raw_grade": 13.3,
+   "length_ft": 270,
+   "rise_ft": 36,
+   "lon": -74.07889,
+   "lat": 40.6451
+  },
+  {
+   "name": "W 185 ST",
+   "boro": "Manhattan",
+   "grade": 13.2,
+   "raw_grade": 13.2,
+   "length_ft": 191,
+   "rise_ft": 25,
+   "lon": -73.93353,
+   "lat": 40.85235
+  },
+  {
+   "name": "BENEDICT RD",
+   "boro": "Staten Island",
+   "grade": 13.2,
+   "raw_grade": 13.3,
+   "length_ft": 269,
+   "rise_ft": 36,
+   "lon": -74.10814,
+   "lat": 40.59729
+  },
+  {
+   "name": "GRETA PL",
+   "boro": "Staten Island",
+   "grade": 13.2,
+   "raw_grade": 13.2,
+   "length_ft": 211,
+   "rise_ft": 28,
+   "lon": -74.08893,
+   "lat": 40.62261
+  },
+  {
+   "name": "BENZIGER AVE",
+   "boro": "Staten Island",
+   "grade": 13.2,
+   "raw_grade": 13.2,
+   "length_ft": 229,
+   "rise_ft": 30,
+   "lon": -74.08151,
+   "lat": 40.63987
+  },
+  {
+   "name": "ST JAMES PL",
+   "boro": "Staten Island",
+   "grade": 13.2,
+   "raw_grade": 13.2,
+   "length_ft": 137,
+   "rise_ft": 18,
+   "lon": -74.10577,
+   "lat": 40.59514
+  },
+  {
+   "name": "WALL ST",
+   "boro": "Staten Island",
+   "grade": 13.1,
+   "raw_grade": 13.1,
+   "length_ft": 247,
+   "rise_ft": 32,
+   "lon": -74.07882,
+   "lat": 40.64361
+  },
+  {
+   "name": "MARILLAC HL",
+   "boro": "Bronx",
+   "grade": 13.0,
+   "raw_grade": 13.0,
+   "length_ft": 325,
+   "rise_ft": 42,
+   "lon": -73.90903,
+   "lat": 40.91238
+  }
+ ],
+ "highest": {
+  "name": "ELMHURST AVE",
+  "ft": 400,
+  "lon": -74.11231,
+  "lat": 40.6024
+ },
+ "borough_highest": {
+  "Staten Island": {
+   "name": "ELMHURST AVE",
+   "ft": 400,
+   "lon": -74.11231,
+   "lat": 40.6024
+  },
+  "Brooklyn": {
+   "name": "17 ST and PROSPECT PARK W",
+   "ft": 180,
+   "lon": -73.98228,
+   "lat": 40.65828
+  },
+  "Manhattan": {
+   "name": "PINEHURST AVE",
+   "ft": 260,
+   "lon": -73.93858,
+   "lat": 40.85294
+  },
+  "Queens": {
+   "name": "GRAND CENTRAL PKWY",
+   "ft": 258,
+   "lon": -73.72002,
+   "lat": 40.75765
+  },
+  "Bronx": {
+   "name": "GOODRIDGE AVE and GROSVENOR AVE",
+   "ft": 279,
+   "lon": -73.90313,
+   "lat": 40.89874
+  }
+ },
+ "borough_steepest": {
+  "Staten Island": {
+   "name": "CHESTNUT PL",
+   "grade": 20.0,
+   "length_ft": 190,
+   "rise_ft": 38,
+   "lon": -74.09305,
+   "lat": 40.63666
+  },
+  "Bronx": {
+   "name": "W 254 ST",
+   "grade": 16.5,
+   "length_ft": 209,
+   "rise_ft": 35,
+   "lon": -73.91051,
+   "lat": 40.90319
+  },
+  "Queens": {
+   "name": "WILLOW ST",
+   "grade": 16.1,
+   "length_ft": 269,
+   "rise_ft": 43,
+   "lon": -73.7491,
+   "lat": 40.76977
+  },
+  "Manhattan": {
+   "name": "W 185 ST",
+   "grade": 13.2,
+   "length_ft": 191,
+   "rise_ft": 25,
+   "lon": -73.93353,
+   "lat": 40.85235
+  },
+  "Brooklyn": {
+   "name": "BARBEY ST",
+   "grade": 13.0,
+   "length_ft": 228,
+   "rise_ft": 30,
+   "lon": -73.89041,
+   "lat": 40.6833
+  }
+ },
+ "bands": [
+  {
+   "label": "flat",
+   "lo": 0,
+   "hi": 0.02
+  },
+  {
+   "label": "gentle",
+   "lo": 0.02,
+   "hi": 0.05
+  },
+  {
+   "label": "noticeable",
+   "lo": 0.05,
+   "hi": 0.0833
+  },
+  {
+   "label": "steep",
+   "lo": 0.0833,
+   "hi": 0.12
+  },
+  {
+   "label": "very steep",
+   "lo": 0.12,
+   "hi": 9
+  }
+ ]
+}

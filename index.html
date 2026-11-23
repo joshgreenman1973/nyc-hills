@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uphill</title>
+<meta name="description" content="Every walkable block in New York City colored by how steep it is, measured from federal lidar elevation data, with a router that finds the flattest walk between any two points.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<style>
+/* House system v5, black. Tokens copied from experiments/house-style/house.css. */
+:root{
+  --bg:#111311; --bg2:#1b1e1b; --fg:#f2f3ef; --fg2:#a2a8a1;
+  --line:#3a3f3a; --line2:#262a26; --grid:rgba(255,255,255,.13);
+  --cobalt:#5b86ff; --vermilion:#ff6a45; --sun:#ffd23f; --mint:#3fd68f;
+  --rose:#ff6fae; --cyan:#3cc8d8; --orange:#ff9f2e; --lilac:#b79bff;
+  --accent:var(--orange);
+  --flat:#3f4740; --night:#0b0c0b;
+  --sans:'Karla',system-ui,-apple-system,sans-serif;
+  --display:'Archivo',system-ui,sans-serif;
+  --t-micro:13px; --t-small:14px; --t-body:17px;
+  --t-find:clamp(1.2rem,1.9vw,1.55rem);
+  --t-h1:clamp(1.9rem,3.2vw,2.6rem);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:var(--t-body);line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:var(--fg);text-decoration-color:var(--fg2);text-underline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+@media (max-width:600px){.wrap{padding:0 16px}}
+button,input{font:inherit;color:inherit}
+
+header{padding:22px 0 26px}
+.topline{display:flex;justify-content:space-between;gap:16px;font-size:var(--t-micro);color:var(--fg2);padding-bottom:28px;border-bottom:1px solid var(--line2);margin-bottom:26px}
+h1{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;font-size:var(--t-h1);line-height:1.05;margin:0 0 14px;letter-spacing:-.01em}
+.finding{font-size:var(--t-find);line-height:1.35;margin:0 0 14px;max-width:46ch}
+.lede{color:var(--fg2);max-width:70ch;margin:0}
+.lede strong{color:var(--fg);font-weight:600}
+
+/* the map */
+.stage{position:relative;height:min(82vh,900px);min-height:480px;background:var(--night);border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
+#map{position:absolute;inset:0}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg2);font-size:var(--t-small);z-index:5;pointer-events:none}
+.panel{position:absolute;z-index:4;left:16px;top:16px;width:min(360px,calc(100% - 32px));background:rgba(11,12,11,.92);border:1px solid var(--line);padding:14px 16px 12px}
+.panel h2{font-family:var(--display);font-variation-settings:'wdth' 80;font-weight:650;font-size:1.15rem;margin:0 0 4px;line-height:1.15}
+.panel p{margin:0;font-size:var(--t-small);color:var(--fg2);line-height:1.45}
+.ends{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;margin:10px 0 2px}
+.ends label{font-size:var(--t-small);color:var(--fg2)}
+.ends input{width:100%;background:var(--bg);border:1px solid var(--line);padding:6px 8px;font-size:var(--t-small);border-radius:0}
+.ends input:focus{outline:1px solid var(--fg2);outline-offset:0}
+.pin{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:var(--fg);color:var(--bg)}
+.res{margin-top:10px;border-top:1px solid var(--line2);padding-top:10px;display:none}
+.res.on{display:block}
+.rrow{display:grid;grid-template-columns:14px 1fr;gap:8px;margin-bottom:6px;font-size:var(--t-small);line-height:1.4}
+.rrow .sw{width:14px;height:4px;margin-top:8px}
+.rrow b{font-weight:600;color:var(--fg)}
+.rrow span{color:var(--fg2)}
+.verdict{font-size:var(--t-small);margin:6px 0 8px}
+#profile{display:block;width:100%;height:92px}
+.panel .tools{display:flex;gap:14px;margin-top:8px;font-size:var(--t-small)}
+.linkbtn{background:none;border:0;padding:0;color:var(--fg2);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:2px;cursor:pointer}
+.linkbtn:hover{color:var(--fg)}
+.panel.min .body{display:none}
+
+.legend{position:absolute;z-index:4;left:16px;bottom:16px;background:rgba(11,12,11,.92);border:1px solid var(--line);padding:10px 12px 8px;font-size:var(--t-small)}
+.legend .h{color:var(--fg2);margin-bottom:6px;font-size:var(--t-micro)}
+.legend button{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:center;width:100%;background:none;border:0;padding:3px 0;text-align:left;cursor:pointer;opacity:1}
+.legend button.off{opacity:.32}
+.legend .sw{height:4px}
+.legend .r{color:var(--fg2);font-variant-numeric:tabular-nums;padding-left:10px}
+.legend .note{color:var(--fg2);font-size:var(--t-micro);margin-top:6px;max-width:30ch}
+.tilt{position:absolute;z-index:4;right:16px;top:16px;background:rgba(11,12,11,.92);border:1px solid var(--line);padding:7px 12px;cursor:pointer;font-size:var(--t-small)}
+.tilt[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+@media (max-width:700px){
+  .stage{height:82vh}
+  .legend{left:8px;right:52px;bottom:8px;padding:6px 8px;display:flex;flex-wrap:wrap;gap:2px 12px}
+  .legend button{width:auto;grid-template-columns:16px auto;gap:5px;padding:2px 0;font-size:var(--t-micro)}
+  .legend .h,.legend .r,.legend .note{display:none}
+  .panel{left:8px;top:8px;width:calc(100% - 16px);padding:10px 12px}
+  .panel h2{font-size:1rem}
+  .ends{margin-top:6px}
+  .tilt{top:auto;bottom:76px;left:8px;right:auto;font-size:var(--t-micro);padding:5px 9px}
+}
+
+.maplibregl-ctrl-bottom-right{z-index:3}
+.maplibregl-ctrl-attrib{background:rgba(8,9,10,.7)!important;font-family:var(--sans)}
+.maplibregl-ctrl-attrib a{color:var(--fg2)!important}
+.maplibregl-ctrl-group{background:var(--bg2)!important;border-radius:0!important;box-shadow:none!important;border:1px solid var(--line)}
+.maplibregl-ctrl-group button{filter:invert(1) brightness(.8)}
+.maplibregl-ctrl-group button+button{border-top:1px solid var(--line)!important}
+.maplibregl-popup-content{background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:0;box-shadow:none;padding:8px 10px;font-family:var(--sans);font-size:var(--t-small);line-height:1.4}
+.maplibregl-popup-tip{display:none}
+.maplibregl-popup-content b{font-weight:600}
+.maplibregl-popup-content .m{color:var(--fg2)}
+.mk{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font:700 12px var(--sans);background:var(--fg);color:var(--bg);border:2px solid var(--bg)}
+
+/* sections below */
+section{padding:46px 0 10px}
+h3{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;font-size:1.45rem;margin:0 0 8px;line-height:1.15}
+section > .wrap > p{max-width:70ch;color:var(--fg2);margin:0 0 18px}
+section > .wrap > p strong{color:var(--fg);font-weight:600}
+.boros{display:grid;grid-template-columns:150px 1fr 80px;gap:10px 16px;align-items:center;max-width:900px}
+.boros .n{font-weight:600}
+.boros .m{color:var(--fg2);font-size:var(--t-small);text-align:right;font-variant-numeric:tabular-nums}
+.boros .bar{display:flex;height:22px}
+.boros .bar i{display:block;height:100%}
+@media (max-width:600px){.boros{grid-template-columns:1fr 64px}.boros .bar{grid-column:1 / -1;order:3}}
+.steep{list-style:none;margin:0;padding:0;columns:2;column-gap:40px;max-width:1000px}
+@media (max-width:800px){.steep{columns:1}}
+.steep li{break-inside:avoid;display:grid;grid-template-columns:34px 1fr auto;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2);align-items:baseline}
+.steep .k{color:var(--fg2);font-variant-numeric:tabular-nums}
+.steep .g{font-variant-numeric:tabular-nums;font-weight:600}
+.steep button{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.steep .b{display:block;color:var(--fg2);font-size:var(--t-small);font-weight:400}
+.tops{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;max-width:1000px}
+.tops div{border-top:2px solid var(--fg);padding-top:8px}
+.tops .bn{color:var(--fg2);font-size:var(--t-small)}
+.tops button{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+#method{padding-bottom:40px}
+#method h4{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:650;font-size:1.05rem;margin:22px 0 6px}
+#method p,#method li{max-width:72ch;color:var(--fg2);font-size:var(--t-small);line-height:1.6}
+#method ul{padding-left:18px;margin:0}
+#method code{font-size:.92em;color:var(--fg)}
+footer{padding:26px 0 40px;color:var(--fg2);font-size:var(--t-micro);border-top:1px solid var(--line2)}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <div class="topline"><span>Street lines from New York City, elevation from the U.S. Geological Survey</span><span>Elevation flown 2013 to 2014; streets as of Nov. 2026</span></div>
+  <h1>Uphill</h1>
+  <p class="finding" id="finding"><a href="#method-grade">Four in five miles</a> of New York City street are essentially flat, and the steepest block, on Staten Island’s <a href="#method-steep">Chestnut Place, climbs 20 feet for every 100</a>.</p>
+  <p class="lede" id="lede">This map grades every walkable block in the city, <a href="#method-miles">6,516 miles of street</a> plus paths, boardwalks and step streets, using a <a href="https://www.usgs.gov/3d-elevation-program">federal lidar survey</a> flown in 2013 and 2014. Of those street miles, <a href="#method-grade">5,272 rise less than 2 feet in every 100</a>. Only <a href="#method-grade">36 miles are steeper than 1 foot in 12</a>, the most a wheelchair ramp is allowed under <a href="https://www.access-board.gov/ada/#ada-405">federal accessibility rules</a>, and <a href="#method-grade">19.5 of those miles are on Staten Island</a>. Hover over a block for its grade, or pick two points and the map will find the flattest walk between them.</p>
+</header>
+
+<div class="stage">
+  <div id="map"></div>
+  <div class="loading" id="loading">Loading every block in the city…</div>
+  <div class="panel" id="panel">
+    <h2>Find the flattest walk</h2>
+    <div class="body">
+      <p id="hint">Click the map for a starting point, then again for where you're going. Or type two addresses.</p>
+      <div class="ends">
+        <span class="pin">A</span><input id="fromBox" placeholder="From: an address or place" autocomplete="off">
+        <span class="pin">B</span><input id="toBox" placeholder="To: an address or place" autocomplete="off">
+      </div>
+      <div class="res" id="res">
+        <div class="rrow"><i class="sw" style="background:var(--lilac)"></i><div><b>Flattest</b> <span id="rFlat"></span></div></div>
+        <div class="rrow"><i class="sw" style="background:var(--fg)"></i><div><b>Shortest</b> <span id="rShort"></span></div></div>
+        <p class="verdict" id="verdict"></p>
+        <svg id="profile" aria-label="Elevation along both routes"></svg>
+      </div>
+      <div class="tools"><button class="linkbtn" id="clearBtn" type="button">Start over</button><a class="linkbtn" href="#method-route">How walks are chosen</a></div>
+    </div>
+  </div>
+  <button class="tilt" id="tilt" type="button" aria-pressed="false">Tilt to see the hills</button>
+  <div class="legend" id="legend"></div>
+</div>
+
+<section>
+  <div class="wrap">
+    <h3>Borough by borough</h3>
+    <p id="boroText">Staten Island is the hilliest borough: <a href="#method-grade">a third of its 970 street miles</a> have some grade to them, and the Bronx is close behind at <a href="#method-grade">29% of 848 miles</a>. Brooklyn, mostly <a href="https://en.wikipedia.org/wiki/Harbor_Hill_Moraine">glacial outwash plain south of the ridge</a> that runs through Green-Wood Cemetery and Prospect Park, is the flattest, with <a href="#method-grade">90% of its 1,678 miles</a> under a 2% grade. Each bar shows a borough’s street miles by grade, using the colors on the map.</p>
+    <div class="boros" id="boros"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>The steepest streets</h3>
+    <p id="steepText">The steepest stretch of each named street, among pieces at least 131 feet (40 meters) long, measured end to end. Staten Island’s North Shore hills hold most of the list, with Riverdale in the Bronx and Douglaston in Queens. Stretches within 98 feet (30 meters) of a highway, ramp or bridge are left off, because the ground model can misread them (<a href="#method-near">why</a>). Click a name to go there on the map.</p>
+    <ol class="steep" id="steep"></ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h3>The highest street in each borough</h3>
+    <p id="topsText">The highest point on each borough’s street grid, in feet above sea level (the NAVD 88 datum), from the same survey. Staten Island’s, near the <a href="https://en.wikipedia.org/wiki/Todt_Hill">401-foot summit of Todt Hill</a>, is the highest street in the city; Manhattan’s, beside <a href="https://en.wikipedia.org/wiki/Bennett_Park">Bennett Park’s 265-foot rock</a>, is the island’s.</p>
+    <div class="tops" id="tops"></div>
+  </div>
+</section>
+
+<section id="method">
+  <div class="wrap">
+    <h3>How this was made</h3>
+<p>Everything here can be rebuilt from public data with the scripts in <a href="https://github.com/joshgreenman1973/nyc-hills">the project’s repository</a>, which also holds a longer <a href="https://github.com/joshgreenman1973/nyc-hills/blob/main/methodology.md">methodology</a>. Figures were computed on Nov. 23, 2026.</p>
+
+<h4 id="method-sources">Sources</h4>
+<ul>
+<li>Streets: the city’s <a href="https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z">Street Centerline (CSCL)</a> file on NYC Open Data, downloaded Nov. 23, 2026: 122,331 segments.</li>
+<li>Elevation: the U.S. Geological Survey’s <a href="https://www.usgs.gov/3d-elevation-program">3D Elevation Program</a> one-meter bare-earth model, read through the <a href="https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer">National Map elevation service</a> on a grid of about 2.5 meters. For the whole city it comes from one survey, the <a href="https://prd-tnm.s3.amazonaws.com/index.html?prefix=StagedProducts/Elevation/metadata/NY_New_York_CMGP_SANDY_LiDAR_15/">USGS New York CMGP Sandy lidar</a>, flown from August 2013 to April 2014. A street regraded since then shows its old slope.</li>
+<li>The shaded relief under the streets is drawn from <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles on AWS</a>, a separate elevation source used only for the picture.</li>
+</ul>
+
+<h4 id="method-miles">What counts as walkable</h4>
+<p>Kept: streets, alleys, boardwalks, paths and step streets that are built, plus bridges where pedestrians are allowed (these connect the walking network but aren’t graded). Dropped: 9,397 segments of types people can’t walk (highways, ramps, tunnels, driveways, ferry routes and the like), 2,541 marked for vehicles only and 39 not yet built. Segments the city codes as above or below ground level are not graded either. Blocks longer than 100 meters (328 feet) are cut into equal pieces no longer than that, so a hump mid-block shows up. That gives 173,294 pieces, 169,284 of them graded. Street miles count streets and alleys only; where the city’s file draws a divided street as two lines, both count.</p>
+
+<h4 id="method-grade">How a grade is measured</h4>
+<p>Each line is sampled every 5 meters, and 60 meters past each end along its own direction. The elevation model is bare earth, with bridges removed, so a street that crosses a highway or rail cut on a short bridge appears to plunge into the cut. To undo that, the profile is passed through three filters: a three-sample median that drops single bad readings; a “closing” (a running maximum and then a running minimum over 120 meters) that fills any dip narrower than that; and an “opening” (minimum, then maximum, over 40 meters) that shaves any bump narrower than 40 meters. The ends of 2,323 pieces moved more than 2 meters as a result. Any piece whose filtered profile still rises or falls more than 35% over 10 meters is treated as a wall or bridge abutment and left ungraded: 169 pieces, 4.6 miles.</p>
+<p>Grade is the difference in elevation between a piece’s two ends divided by its length along the line, in percent. The bands: flat, under 2%; gentle, 2% to 5%; noticeable, 5% to 8.33% (federal rules treat a walkway steeper than <a href="https://www.access-board.gov/ada/#ada-403">1 in 20</a> as a ramp); steep, 8.33% to 12% (<a href="https://www.access-board.gov/ada/#ada-405">1 in 12</a> is the steepest ramp allowed); and very steep, 12% or more.</p>
+
+<h4 id="method-near">Stretches near highways and bridges</h4>
+<p>The filters don’t catch every case, especially where a street runs alongside a sunken highway or meets a viaduct. Any graded piece within 30 meters of a highway, ramp, bridge, tunnel or off-ground segment is flagged: 471.9 street miles. Flagged pieces stay on the map with a warning in their label and count toward the totals above, but they are kept off the steepest-streets list.</p>
+
+<h4 id="method-steep">The steepest streets</h4>
+<p>From pieces at least 40 meters long that are named, graded and not flagged, the steepest piece of each street in each borough. As a check, the method puts <a href="https://en.wikipedia.org/wiki/Duffy%27s_Hill">Duffy’s Hill</a>, the block of Lexington Avenue between 102nd and 103rd streets in East Harlem, at 12.1%; published measurements put it at 12.6%.</p>
+
+<h4 id="method-route">How walks are chosen</h4>
+<p>The shortest walk minimizes distance. The flattest walk minimizes distance weighted by steepness: each piece counts as its length times one plus the square of its grade divided by 5%. A 5% block counts double, a 10% block five times and a 2% block barely more than its length. Step streets count 40 times their length, so the flattest walk avoids stairs unless there’s no way around. Bridges, which aren’t graded, count at their length. Each click snaps to the nearest corner or block end within 600 meters. Staten Island has no walkable connection to the other boroughs (the ferry isn’t included), so walks can’t cross between them.</p>
+
+<h4 id="method-limits">Limits</h4>
+<ul>
+<li>The survey is from 2013 and 2014, and the streets are from 2026. New streets are graded on the old ground.</li>
+<li>Grades follow the center of the street. A sidewalk can differ, especially where it steps or ramps.</li>
+<li>A step street’s grade is its overall rise over its length, not the pitch of the stairs.</li>
+<li>Very short pieces carry more noise: an error of 10 centimeters is a full point of grade over 10 meters.</li>
+</ul>
+  </div>
+</section>
+
+<footer class="wrap">By Josh Greenman. Street centerlines: <a href="https://data.cityofnewyork.us/City-Government/Centerline/inkn-q76z">NYC Open Data</a>. Elevation: <a href="https://www.usgs.gov/3d-elevation-program">USGS 3D Elevation Program</a>. Shaded relief: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles on AWS</a>. Basemap © <a href="https://carto.com/attributions">CARTO</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>. Address search: <a href="https://geosearch.planninglabs.nyc/">NYC GeoSearch</a>. <a href="#method">How this was made</a>.</footer>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+(function(){
+'use strict';
+const root = document.documentElement;
+const tok = n => getComputedStyle(root).getPropertyValue('--' + n).trim();
+const SMALL = matchMedia('(max-width:700px)').matches;
+const FT = 3.28084, MI = 1609.344;
+const MLON = 111320 * Math.cos(40.70 * Math.PI / 180), MLAT = 111320;
+
+// Grade bands, in percent. 5% is where the federal accessibility standards stop
+// calling a walkway a walkway and start calling it a ramp; 8.33% (1 in 12) is the
+// steepest ramp they allow.
+const BANDS = [
+  {lo:0,    hi:2,    label:'Flat',       sub:'under 2%',     ink:'flat'},
+  {lo:2,    hi:5,    label:'Gentle',     sub:'2 to 5%',      ink:'cyan'},
+  {lo:5,    hi:8.33, label:'Noticeable', sub:'5 to 8.3%',    ink:'sun'},
+  {lo:8.33, hi:12,   label:'Steep',      sub:'8.3 to 12%',   ink:'orange'},
+  {lo:12,   hi:999,  label:'Very steep', sub:'12% or more',  ink:'vermilion'}
+];
+const K_STREET = 0, K_PATH = 1, K_STAIRS = 2, K_RAISED = 3;
+
+let D, N, E, lon, lat, za, zb, elen, egrade, adjOff, adjEdge, adjTo, deg;
+let map, minBand = 0;
+
+// ---------- names
+const SUF = n => { const v = n % 100; if (v >= 11 && v <= 13) return n + 'th'; return n + (['th','st','nd','rd'][n % 10] || 'th'); };
+const KEEP = new Set(['FDR','JFK','LIRR','MLK','II','III','IV']);
+function nice(s){
+  if (!s) return 'Unnamed street';
+  return s.split(' ').map((w, i, a) => {
+    if (/^\d+$/.test(w) && i < a.length - 1 && /^(ST|AVE|AV|RD|DR|PL|TER|CT|LN|WAY|STREET|AVENUE|ROAD|DRIVE|PLACE)$/.test(a[i+1])) return SUF(+w);
+    if (KEEP.has(w)) return w;
+    if (/^(N|S|E|W)$/.test(w)) return w + '.';
+    if (/^(O'|MC)/.test(w) && w.length > 2) return w[0] + w.slice(1, w.startsWith('MC') ? 2 : 2).toLowerCase() + w[2].toUpperCase() + w.slice(3).toLowerCase();
+    return w.charAt(0) + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+const BORO = ['', 'Manhattan', 'the Bronx', 'Brooklyn', 'Queens', 'Staten Island'];
+const fmt = (x, d=0) => x.toLocaleString('en-US', {maximumFractionDigits:d, minimumFractionDigits:d});
+const pct = g => (Math.round(g * 10) / 10).toFixed(1) + '%';
+
+// ---------- data
+async function loadJSON(u){ const r = await fetch(u); if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); }
+
+function decode(){
+  N = D.nodes.length / 2; E = D.a.length;
+  lon = new Float64Array(N); lat = new Float64Array(N);
+  let x = 0, y = 0;
+  for (let i = 0; i < N; i++){
+    x += D.nodes[2*i]; y += D.nodes[2*i+1];
+    lon[i] = x / D.q; lat[i] = y / D.q;
+  }
+  za = new Float32Array(E); zb = new Float32Array(E);
+  for (let e = 0; e < E; e++){
+    za[e] = D.za[e] === -32768 ? NaN : D.za[e] / 10;
+    zb[e] = D.zb[e] === -32768 ? NaN : D.zb[e] / 10;
+  }
+  elen = new Float32Array(E); egrade = new Float32Array(E);
+  const feats = new Array(E);
+  for (let e = 0; e < E; e++){
+    const a = D.a[e], b = D.b[e];
+    const coords = [[lon[a], lat[a]]];
+    const g = D.g[e];
+    if (g){
+      let qx = Math.round(lon[a] * D.q), qy = Math.round(lat[a] * D.q);
+      for (let j = 0; j < g.length; j += 2){ qx += g[j]; qy += g[j+1]; coords.push([qx / D.q, qy / D.q]); }
+    }
+    coords.push([lon[b], lat[b]]);
+    let L = 0;
+    for (let j = 1; j < coords.length; j++){
+      L += Math.hypot((coords[j][0] - coords[j-1][0]) * MLON, (coords[j][1] - coords[j-1][1]) * MLAT);
+    }
+    elen[e] = L;
+    const k = D.k[e];
+    const gr = (k === K_RAISED || isNaN(za[e]) || isNaN(zb[e]) || L <= 0) ? NaN : (zb[e] - za[e]) / L;
+    egrade[e] = gr;
+    feats[e] = {type:'Feature', geometry:{type:'LineString', coordinates:coords},
+      properties:{i:e, k, g: isNaN(gr) ? -1 : Math.round(Math.abs(gr) * 1000) / 10}};
+  }
+  // adjacency, both directions
+  deg = new Int32Array(N);
+  for (let e = 0; e < E; e++){ deg[D.a[e]]++; deg[D.b[e]]++; }
+  adjOff = new Int32Array(N + 1);
+  for (let i = 0; i < N; i++) adjOff[i+1] = adjOff[i] + deg[i];
+  adjEdge = new Int32Array(2 * E); adjTo = new Int32Array(2 * E);
+  const fill = adjOff.slice(0, N);
+  for (let e = 0; e < E; e++){
+    const a = D.a[e], b = D.b[e];
+    adjEdge[fill[a]] = e; adjTo[fill[a]++] = b;
+    adjEdge[fill[b]] = e; adjTo[fill[b]++] = a;
+  }
+  return {type:'FeatureCollection', features:feats};
+}
+
+// ---------- map
+function gradeColor(){
+  return ['case',
+    ['==', ['get','k'], K_STAIRS], tok('lilac'),
+    ['<', ['get','g'], 0], '#5b625c',
+    ['step', ['get','g'], tok('flat'), 2, tok('cyan'), 5, tok('sun'), 8.33, tok('orange'), 12, tok('vermilion')]];
+}
+function lineWidth(){
+  return ['interpolate', ['linear'], ['zoom'],
+    10, ['step', ['get','g'], 0.35, 5, 0.8, 8.33, 1.2],
+    13, ['step', ['get','g'], 0.8, 5, 1.8, 8.33, 2.6],
+    16, ['step', ['get','g'], 2, 5, 4, 8.33, 5.5],
+    18, ['step', ['get','g'], 4, 5, 7, 8.33, 9]];
+}
+function bandFilter(){
+  const lo = BANDS[minBand].lo;
+  if (lo === 0) return null;
+  return ['any', ['==', ['get','k'], K_STAIRS], ['>=', ['get','g'], lo]];
+}
+
+function buildMap(fc){
+  const terr = {type:'raster-dem', tiles:['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'],
+    encoding:'terrarium', tileSize:256, maxzoom:15, attribution:'Terrain Tiles on AWS'};
+  map = new maplibregl.Map({
+    container:'map',
+    style:{
+      version:8,
+      sources:{
+        carto:{type:'vector', url:'https://tiles.basemaps.cartocdn.com/vector/carto.streets/v1/tiles.json'},
+        shade:terr,
+        relief:Object.assign({}, terr)
+      },
+      layers:[
+        {id:'bg', type:'background', paint:{'background-color':'#151816'}},
+        {id:'hillshade', type:'hillshade', source:'shade', paint:{
+          'hillshade-exaggeration':0.8, 'hillshade-shadow-color':'#000000',
+          'hillshade-highlight-color':'#5d665e', 'hillshade-accent-color':'#151816',
+          'hillshade-illumination-direction':315}},
+        {id:'water', type:'fill', source:'carto', 'source-layer':'water', paint:{'fill-color':tok('night')}},
+        {id:'bldg', type:'fill', source:'carto', 'source-layer':'building', minzoom:15,
+          paint:{'fill-color':'#1d211e','fill-opacity':['interpolate',['linear'],['zoom'],15,0,16,0.55]}}
+      ]
+    },
+    center:[-73.93, 40.72], zoom:SMALL ? 9.8 : 10.7, minZoom:9, maxZoom:18.5,
+    maxBounds:[[-74.7, 40.3], [-73.2, 41.1]], attributionControl:false, hash:true,
+    maxPitch:75
+  });
+  map.addControl(new maplibregl.NavigationControl({showCompass:true, visualizePitch:true}), 'bottom-right');
+  map.addControl(new maplibregl.AttributionControl({compact:true}), 'bottom-right');
+
+  map.on('load', () => {
+    map.addSource('streets', {type:'geojson', data:fc, buffer:32, tolerance:0.3});
+    map.addLayer({id:'streets', type:'line', source:'streets',
+      filter:['!=', ['get','k'], K_STAIRS],
+      layout:{'line-cap':'round','line-join':'round','line-sort-key':['get','g']},
+      paint:{'line-color':gradeColor(), 'line-width':lineWidth()}});
+    map.addLayer({id:'stairs', type:'line', source:'streets',
+      filter:['==', ['get','k'], K_STAIRS],
+      paint:{'line-color':tok('lilac'), 'line-dasharray':[0.6, 0.6],
+        'line-width':['interpolate',['linear'],['zoom'],11,1,15,4,18,8]}});
+    // routes
+    map.addSource('routes', {type:'geojson', data:{type:'FeatureCollection', features:[]}});
+    map.addLayer({id:'route-case', type:'line', source:'routes',
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':'#000', 'line-width':['interpolate',['linear'],['zoom'],11,6,16,13], 'line-opacity':0.85}});
+    map.addLayer({id:'route-short', type:'line', source:'routes', filter:['==',['get','r'],'short'],
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':tok('fg'), 'line-width':['interpolate',['linear'],['zoom'],11,2.2,16,5], 'line-dasharray':[1.2, 1.4]}});
+    map.addLayer({id:'route-flat', type:'line', source:'routes', filter:['==',['get','r'],'flat'],
+      layout:{'line-cap':'round','line-join':'round'},
+      paint:{'line-color':tok('lilac'), 'line-width':['interpolate',['linear'],['zoom'],11,3,16,7]}});
+    document.getElementById('loading').remove();
+    hover(); clicks();
+  });
+}
+
+// ---------- hover
+function hover(){
+  const pop = new maplibregl.Popup({closeButton:false, closeOnClick:false, offset:12, maxWidth:'280px'});
+  let last = -1;
+  function show(ev){
+    const f = map.queryRenderedFeatures(
+      [[ev.point.x - 4, ev.point.y - 4], [ev.point.x + 4, ev.point.y + 4]], {layers:['streets','stairs']});
+    if (!f.length){ pop.remove(); last = -1; map.getCanvas().style.cursor = ''; return; }
+    // prefer the steepest thing under the pointer
+    f.sort((p, q) => q.properties.g - p.properties.g);
+    const e = f[0].properties.i;
+    map.getCanvas().style.cursor = 'crosshair';
+    if (e !== last){ pop.setHTML(describe(e)); last = e; }
+    pop.setLngLat(ev.lngLat).addTo(map);
+  }
+  map.on('mousemove', show);
+  map.on('mouseout', () => { pop.remove(); last = -1; });
+}
+function describe(e){
+  const a = D.a[e], b = D.b[e], k = D.k[e];
+  const name = '<b>' + nice(D.names[D.n[e]]) + '</b>' + (BORO[D.o[e]] ? ' <span class="m">' + BORO[D.o[e]] + '</span>' : '');
+  if (k === K_RAISED) return name + '<br><span class="m">Bridge, overpass or ramp: the ground reading doesn’t apply here, so it isn’t graded.</span>';
+  const g = egrade[e];
+  if (isNaN(g)) return name + '<br><span class="m">No reliable reading: the ground drops away like a wall or a bridge abutment here, so this stretch isn’t graded.</span>';
+  const rise = Math.abs(zb[e] - za[e]) * FT, run = elen[e] * FT;
+  const hiEnd = zb[e] > za[e] ? b : a, loEnd = hiEnd === a ? b : a;
+  const dir = compass(lon[loEnd], lat[loEnd], lon[hiEnd], lat[hiEnd]);
+  let s = name + '<br>' + (k === K_STAIRS ? 'Step street. ' : '') +
+    (rise < 1 ? 'Flat: rises less than a foot over ' + fmt(run) + ' feet.' :
+      'Rises ' + fmt(rise) + ' ft over ' + fmt(run) + ' ft' + (dir ? ', uphill toward the ' + dir : '') + '.') +
+    '<br><span class="m">' + pct(Math.abs(g) * 100) + ' grade · ' + bandOf(Math.abs(g) * 100).label.toLowerCase() +
+    ' · top end ' + fmt(Math.max(za[e], zb[e]) * FT) + ' ft above sea level</span>' +
+    (D.f[e] ? '<br><span class="m">Near a highway, ramp or bridge, where the ground model can misread a street. Treat with care.</span>' : '');
+  return s;
+}
+function bandOf(gp){ for (const b of BANDS) if (gp < b.hi) return b; return BANDS[BANDS.length - 1]; }
+function compass(x1, y1, x2, y2){
+  const dx = (x2 - x1) * MLON, dy = (y2 - y1) * MLAT;
+  if (Math.hypot(dx, dy) < 5) return '';
+  const ang = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
+  return ['north','northeast','east','southeast','south','southwest','west','northwest'][Math.round(ang / 45) % 8];
+}
+
+// ---------- legend
+function legend(){
+  const el = document.getElementById('legend');
+  el.innerHTML = '<div class="h">Grade of each block. Click to show only the steeper ones.</div>' +
+    BANDS.map((b, i) => '<button type="button" data-i="' + i + '"><i class="sw" style="background:' + tok(b.ink) + '"></i><span>' + b.label + '</span><span class="r">' + b.sub + '</span></button>').join('') +
+    '<button type="button" data-stairs="1" tabindex="-1" style="cursor:default"><i class="sw" style="background:repeating-linear-gradient(90deg,' + tok('lilac') + ' 0 5px,transparent 5px 9px)"></i><span>Step streets</span><span class="r">stairs</span></button>' +
+    '<div class="note">A 5% grade rises 5 feet for every 100 you walk.</div>';
+  el.querySelectorAll('button[data-i]').forEach(btn => btn.addEventListener('click', () => {
+    const i = +btn.dataset.i;
+    minBand = (minBand === i) ? 0 : i;
+    el.querySelectorAll('button[data-i]').forEach(o => o.classList.toggle('off', +o.dataset.i < minBand));
+    const f = bandFilter();
+    map.setFilter('streets', f ? ['all', ['!=', ['get','k'], K_STAIRS], f] : ['!=', ['get','k'], K_STAIRS]);
+  }));
+}
+
+// ---------- tilt
+function tilt(){
+  const btn = document.getElementById('tilt');
+  btn.addEventListener('click', () => {
+    const on = btn.getAttribute('aria-pressed') !== 'true';
+    btn.setAttribute('aria-pressed', on);
+    btn.textContent = on ? 'Back to flat' : 'Tilt to see the hills';
+    if (on){
+      map.setTerrain({source:'relief', exaggeration:4});
+      map.easeTo({pitch:65, bearing:map.getBearing() || -20, duration:1400});
+    } else {
+      map.setTerrain(null);
+      map.easeTo({pitch:0, bearing:0, duration:900});
+    }
+  });
+}
+
+// ---------- routing
+let A = null, B = null, mA = null, mB = null;
+function marker(label){
+  const d = document.createElement('div'); d.className = 'mk'; d.textContent = label; return d;
+}
+function nearestNode(x, y){
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < N; i++){
+    if (!deg[i]) continue;
+    const dx = (lon[i] - x) * MLON, dy = (lat[i] - y) * MLAT, d = dx * dx + dy * dy;
+    if (d < bd){ bd = d; best = i; }
+  }
+  return bd < 600 * 600 ? best : -1;
+}
+function cost(e, mode){
+  const L = elen[e];
+  if (mode === 'short') return L;
+  const k = D.k[e];
+  if (k === K_STAIRS) return L * 40;
+  const g = egrade[e];
+  if (isNaN(g)) return L;
+  const r = Math.abs(g) / 0.05;
+  return L * (1 + r * r);
+}
+function dijkstra(src, dst, mode){
+  const dist = new Float64Array(N).fill(Infinity), via = new Int32Array(N).fill(-1);
+  const hn = [], hd = [];
+  const push = (n, d) => { hn.push(n); hd.push(d); let i = hn.length - 1;
+    while (i > 0){ const p = (i - 1) >> 1; if (hd[p] <= hd[i]) break;
+      [hn[p], hn[i]] = [hn[i], hn[p]]; [hd[p], hd[i]] = [hd[i], hd[p]]; i = p; } };
+  const pop = () => { const n = hn[0], d = hd[0], ln = hn.pop(), ld = hd.pop();
+    if (hn.length){ hn[0] = ln; hd[0] = ld; let i = 0;
+      for (;;){ const l = 2*i+1, r = l+1; let m = i;
+        if (l < hn.length && hd[l] < hd[m]) m = l; if (r < hn.length && hd[r] < hd[m]) m = r;
+        if (m === i) break; [hn[m], hn[i]] = [hn[i], hn[m]]; [hd[m], hd[i]] = [hd[i], hd[m]]; i = m; } }
+    return [n, d]; };
+  dist[src] = 0; push(src, 0);
+  while (hn.length){
+    const [u, d] = pop();
+    if (d > dist[u]) continue;
+    if (u === dst) break;
+    for (let j = adjOff[u]; j < adjOff[u+1]; j++){
+      const e = adjEdge[j], v = adjTo[j], nd = d + cost(e, mode);
+      if (nd < dist[v]){ dist[v] = nd; via[v] = e; push(v, nd); }
+    }
+  }
+  if (!isFinite(dist[dst])) return null;
+  const path = []; let u = dst;
+  while (u !== src){ const e = via[u]; path.push(e); u = D.a[e] === u ? D.b[e] : D.a[e]; }
+  path.reverse();
+  // walk the path in travel order, collecting geometry and the profile
+  let node = src, distM = 0, climb = 0, drop = 0, maxG = 0, stairs = 0;
+  const coords = [[lon[src], lat[src]]], prof = [];
+  let lastZ = NaN;
+  for (const e of path){
+    const fwd = D.a[e] === node, next = fwd ? D.b[e] : D.a[e];
+    const geom = edgeCoords(e); if (!fwd) geom.reverse();
+    for (let j = 1; j < geom.length; j++) coords.push(geom[j]);
+    distM += elen[e];
+    if (D.k[e] === K_STAIRS) stairs++;
+    const g = egrade[e];
+    const z0 = fwd ? za[e] : zb[e], z1 = fwd ? zb[e] : za[e];
+    if (!isNaN(g)){
+      const rise = z1 - z0;
+      if (rise > 0) climb += rise; else drop -= rise;
+      if (elen[e] >= 20 && D.k[e] !== K_STAIRS) maxG = Math.max(maxG, Math.abs(g));
+      if (!prof.length) prof.push([distM - elen[e], z0]);
+      prof.push([distM, z1]); lastZ = z1;
+    } else if (!isNaN(lastZ)) prof.push([distM, lastZ]);
+    node = next;
+  }
+  return {coords, dist:distM, climb, drop, maxG, stairs, prof};
+}
+function edgeCoords(e){
+  const a = D.a[e], b = D.b[e], out = [[lon[a], lat[a]]], g = D.g[e];
+  if (g){ let qx = Math.round(lon[a] * D.q), qy = Math.round(lat[a] * D.q);
+    for (let j = 0; j < g.length; j += 2){ qx += g[j]; qy += g[j+1]; out.push([qx / D.q, qy / D.q]); } }
+  out.push([lon[b], lat[b]]);
+  return out;
+}
+function setEnd(which, x, y, label){
+  const n = nearestNode(x, y);
+  const hint = document.getElementById('hint');
+  if (n < 0){ hint.textContent = 'That spot is too far from any walkable street. Try closer to a road.'; return false; }
+  const ll = [lon[n], lat[n]];
+  if (which === 'A'){ A = n; if (mA) mA.remove(); mA = new maplibregl.Marker({element:marker('A')}).setLngLat(ll).addTo(map);
+    document.getElementById('fromBox').value = label || nice(nameAt(n)); }
+  else { B = n; if (mB) mB.remove(); mB = new maplibregl.Marker({element:marker('B')}).setLngLat(ll).addTo(map);
+    document.getElementById('toBox').value = label || nice(nameAt(n)); }
+  return true;
+}
+function nameAt(n){
+  const ns = [];
+  for (let j = adjOff[n]; j < adjOff[n+1]; j++){ const s = D.names[D.n[adjEdge[j]]]; if (s && !ns.includes(s)) ns.push(s); }
+  return ns.slice(0, 2).join(' & ');
+}
+function solve(){
+  const hint = document.getElementById('hint');
+  if (A == null || B == null) return;
+  if (A === B){ hint.textContent = 'Those two points snap to the same corner. Pick a farther destination.'; return; }
+  const f = dijkstra(A, B, 'flat'), s = dijkstra(A, B, 'short');
+  if (!f || !s){ hint.textContent = 'No walking connection found between those points.'; document.getElementById('res').classList.remove('on'); return; }
+  hint.textContent = 'Click the map to start a new walk.';
+  map.getSource('routes').setData({type:'FeatureCollection', features:[
+    {type:'Feature', properties:{r:'short'}, geometry:{type:'LineString', coordinates:s.coords}},
+    {type:'Feature', properties:{r:'flat'}, geometry:{type:'LineString', coordinates:f.coords}}]});
+  const line = r => fmt(r.dist / MI, 2) + ' mi, climbs ' + fmt(r.climb * FT) + ' ft, steepest block ' + pct(r.maxG * 100) +
+    (r.stairs ? ', ' + r.stairs + (r.stairs === 1 ? ' flight' : ' flights') + ' of stairs' : '');
+  document.getElementById('rFlat').textContent = line(f);
+  document.getElementById('rShort').textContent = line(s);
+  const extra = f.dist - s.dist, saved = s.climb - f.climb;
+  const lower = s.maxG - f.maxG >= 0.003;
+  let v;
+  if (Math.abs(extra) < 15) v = 'The shortest walk is already the flattest one.';
+  else {
+    const parts = [];
+    if (lower) parts.push('tops out at ' + pct(f.maxG * 100) + ' instead of ' + pct(s.maxG * 100));
+    if (saved * FT >= 3) parts.push('saves ' + fmt(saved * FT) + ' ft of climbing');
+    if (f.stairs < s.stairs) parts.push('skips ' + (s.stairs - f.stairs === 1 ? 'a flight' : (s.stairs - f.stairs) + ' flights') + ' of stairs');
+    const add = extra * FT < 1000 ? fmt(extra * FT) + ' ft' : fmt(extra / MI, 2) + ' mi';
+    v = parts.length ? 'The flattest walk adds ' + add + ' and ' + (parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0]) + '.'
+      : 'The flattest walk adds ' + add + ' to spread the climb over gentler blocks.';
+  }
+  document.getElementById('verdict').textContent = v;
+  profile(f, s);
+  document.getElementById('res').classList.add('on');
+  const bb = new maplibregl.LngLatBounds();
+  f.coords.concat(s.coords).forEach(c => bb.extend(c));
+  map.fitBounds(bb, {padding:SMALL ? {top:260, bottom:60, left:30, right:30} : {top:60, bottom:60, left:420, right:80}, maxZoom:16.5, duration:900});
+}
+function profile(f, s){
+  const svg = document.getElementById('profile');
+  const W = svg.clientWidth || 320, H = 92, P = {l:34, r:4, t:6, b:16};
+  const all = f.prof.concat(s.prof).map(p => p[1]).filter(v => !isNaN(v));
+  if (!all.length){ svg.innerHTML = ''; return; }
+  let lo = Math.min(...all) * FT, hi = Math.max(...all) * FT;
+  if (hi - lo < 20){ const m = (hi + lo) / 2; lo = m - 10; hi = m + 10; }
+  const maxD = Math.max(f.dist, s.dist);
+  const X = d => P.l + d / maxD * (W - P.l - P.r), Y = v => P.t + (1 - (v * FT - lo) / (hi - lo)) * (H - P.t - P.b);
+  const path = pr => pr.filter(p => !isNaN(p[1])).map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join('');
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.innerHTML =
+    '<line x1="' + P.l + '" x2="' + (W - P.r) + '" y1="' + (H - P.b) + '" y2="' + (H - P.b) + '" stroke="' + tok('line') + '"/>' +
+    '<text x="' + (P.l - 4) + '" y="' + (P.t + 9) + '" text-anchor="end" fill="' + tok('fg2') + '" font-size="11">' + fmt(hi) + '</text>' +
+    '<text x="' + (P.l - 4) + '" y="' + (H - P.b) + '" text-anchor="end" fill="' + tok('fg2') + '" font-size="11">' + fmt(lo) + ' ft</text>' +
+    '<text x="' + (W - P.r) + '" y="' + (H - 3) + '" text-anchor="end" fill="' + tok('fg2') + '" font-size="11">' + fmt(maxD / MI, 2) + ' mi</text>' +
+    '<path d="' + path(s.prof) + '" fill="none" stroke="' + tok('fg') + '" stroke-width="1.5" stroke-dasharray="3 3"/>' +
+    '<path d="' + path(f.prof) + '" fill="none" stroke="' + tok('lilac') + '" stroke-width="2"/>';
+}
+function clicks(){
+  map.on('click', ev => {
+    if (A == null || (A != null && B != null)){
+      clearRoute(true);
+      if (setEnd('A', ev.lngLat.lng, ev.lngLat.lat)) document.getElementById('hint').textContent = 'Now click where you’re going.';
+    } else if (setEnd('B', ev.lngLat.lng, ev.lngLat.lat)) solve();
+  });
+  document.getElementById('clearBtn').addEventListener('click', () => clearRoute(false));
+  const geo = async (box, which) => {
+    const q = box.value.trim(); if (!q) return;
+    const hint = document.getElementById('hint');
+    try {
+      const r = await fetch('https://geosearch.planninglabs.nyc/v2/search?size=1&text=' + encodeURIComponent(q));
+      const j = await r.json();
+      const ft = j.features && j.features[0];
+      if (!ft){ hint.textContent = 'Couldn’t find “' + q + '” in New York City.'; return; }
+      const [x, y] = ft.geometry.coordinates;
+      if (which === 'A' && B != null && A != null){ clearRoute(true); }
+      if (setEnd(which, x, y, ft.properties.label.replace(/, USA$/, ''))){
+        if (A != null && B != null) solve();
+        else { map.flyTo({center:[x, y], zoom:15}); hint.textContent = which === 'A' ? 'Now the destination.' : 'Now the starting point.'; }
+      }
+    } catch (err){ hint.textContent = 'Address search isn’t responding. Click the map instead.'; }
+  };
+  const fb = document.getElementById('fromBox'), tb = document.getElementById('toBox');
+  fb.addEventListener('keydown', ev => { if (ev.key === 'Enter') geo(fb, 'A'); });
+  tb.addEventListener('keydown', ev => { if (ev.key === 'Enter') geo(tb, 'B'); });
+}
+function clearRoute(keepHint){
+  A = B = null; if (mA) mA.remove(); if (mB) mB.remove(); mA = mB = null;
+  document.getElementById('fromBox').value = ''; document.getElementById('toBox').value = '';
+  if (map.getSource('routes')) map.getSource('routes').setData({type:'FeatureCollection', features:[]});
+  document.getElementById('res').classList.remove('on');
+  if (!keepHint) document.getElementById('hint').textContent = 'Click the map for a starting point, then again for where you’re going. Or type two addresses.';
+}
+
+// ---------- sections below the map
+function goTo(x, y, html){
+  document.querySelector('.stage').scrollIntoView({behavior:'smooth', block:'start'});
+  map.flyTo({center:[x, y], zoom:16.6, duration:1600});
+  if (html) new maplibregl.Popup({offset:10, maxWidth:'260px'}).setLngLat([x, y]).setHTML(html).addTo(map);
+}
+function sections(S){
+  const order = ['Manhattan','Bronx','Brooklyn','Queens','Staten Island'];
+  const el = document.getElementById('boros');
+  el.innerHTML = order.map(b => {
+    const s = S.boroughs[b];
+    const bars = BANDS.map(bd => '<i style="width:' + (s.share[bd.label.toLowerCase()] * 100).toFixed(2) + '%;background:' + tok(bd.ink) + '" title="' + bd.label + ': ' + (s.share[bd.label.toLowerCase()] * 100).toFixed(1) + '%"></i>').join('');
+    return '<div class="n">' + (b === 'Bronx' ? 'The Bronx' : b) + '</div><div class="bar">' + bars + '</div><div class="m">' + fmt(s.miles) + ' mi</div>';
+  }).join('');
+  const st = document.getElementById('steep');
+  st.innerHTML = S.steepest.slice(0, 20).map((s, i) =>
+    '<li><span class="k">' + (i + 1) + '</span><span><button type="button" data-i="' + i + '">' + nice(s.name) + '</button><span class="b">' + (s.boro === 'Bronx' ? 'the Bronx' : s.boro) + ', rises ' + fmt(s.rise_ft) + ' ft in ' + fmt(s.length_ft) + ' ft</span></span><span class="g">' + s.grade.toFixed(1) + '%</span></li>').join('');
+  st.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    const s = S.steepest[+btn.dataset.i];
+    goTo(s.lon, s.lat, '<b>' + nice(s.name) + '</b><br>' + s.grade.toFixed(1) + '% at its steepest stretch');
+  }));
+  const tp = document.getElementById('tops');
+  tp.innerHTML = order.map(b => {
+    const h = S.borough_highest[b];
+    return '<div><span class="bn">' + (b === 'Bronx' ? 'The Bronx' : b) + '</span><br><button type="button" data-b="' + b + '">' + nice(h.name.split(' and ')[0]) + '</button><br>' + fmt(h.ft) + ' ft above sea level</div>';
+  }).join('');
+  tp.querySelectorAll('button').forEach(btn => btn.addEventListener('click', () => {
+    const h = S.borough_highest[btn.dataset.b];
+    goTo(h.lon, h.lat, '<b>' + h.name.split(' and ').map(nice).join(' and ') + '</b><br>' + fmt(h.ft) + ' ft above sea level');
+  }));
+}
+
+async function main(){
+  legend(); tilt();
+  try {
+    const [streets, stats] = await Promise.all([loadJSON('data/streets.json'), loadJSON('data/stats.json')]);
+    D = streets;
+    const fc = decode();
+    buildMap(fc);
+    sections(stats);
+  } catch (err){
+    document.getElementById('loading').textContent = 'The street data didn’t load. Try reloading the page.';
+    throw err;
+  }
+}
+main();
+})();
+</script>
+</body>
+</html>
