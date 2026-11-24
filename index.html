@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Uphill</title>
 <meta name="description" content="Every walkable block in New York City colored by how steep it is, measured from federal lidar elevation data, with a router that finds the flattest or the hilliest walk between any two points.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gloock&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
-/* House system v5, black. Colors copied from experiments/house-style/house.css; type set in Helvetica for this page. */
+/* House system v5, black. Colors copied from experiments/house-style/house.css; type set in Helvetica, title in Gloock. */
 :root{
   --bg:#111311; --bg2:#1b1e1b; --fg:#f2f3ef; --fg2:#a2a8a1;
   --line:#3a3f3a; --line2:#262a26; --grid:rgba(255,255,255,.13);
@@ -17,6 +20,7 @@
   --flat:#3f4740; --night:#0b0c0b;
   --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
   --display:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --title:'Gloock',Georgia,serif;
   --t-micro:13px; --t-small:14px; --t-body:17px;
   --t-find:clamp(1.2rem,1.9vw,1.55rem);
   --t-h1:clamp(1.9rem,3.2vw,2.6rem);
@@ -32,7 +36,7 @@ button,input{font:inherit;color:inherit}
 
 header{padding:22px 0 26px}
 .topline{display:flex;justify-content:space-between;gap:16px;font-size:var(--t-micro);color:var(--fg2);padding-bottom:28px;border-bottom:1px solid var(--line2);margin-bottom:26px}
-h1{font-family:var(--display);font-weight:700;font-size:var(--t-h1);line-height:1.05;margin:0 0 14px;letter-spacing:-.02em}
+h1{font-family:var(--title);font-weight:400;font-size:var(--t-h1);line-height:1.05;margin:0 0 14px;letter-spacing:0}
 .finding{font-size:var(--t-find);line-height:1.35;margin:0 0 14px;max-width:46ch}
 .lede{color:var(--fg2);max-width:70ch;margin:0}
 .lede strong{color:var(--fg);font-weight:600}
