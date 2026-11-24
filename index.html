@@ -52,6 +52,14 @@ h1{font-family:var(--title);font-weight:400;font-size:var(--t-h1);line-height:1.
 .ends label{font-size:var(--t-small);color:var(--fg2)}
 .ends input{width:100%;background:var(--bg);border:1px solid var(--line);padding:6px 8px;font-size:var(--t-small);border-radius:0}
 .ends input:focus{outline:1px solid var(--fg2);outline-offset:0}
+.ac{position:relative;min-width:0}
+.sug{display:none;position:absolute;z-index:6;left:0;right:0;top:100%;margin:0;padding:0;list-style:none;background:var(--bg);border:1px solid var(--line);border-top:0;max-height:240px;overflow-y:auto}
+.sug.on{display:block}
+.sug li{padding:6px 8px;font-size:var(--t-small);line-height:1.3;cursor:pointer;border-top:1px solid var(--line2)}
+.sug li:first-child{border-top:0}
+.sug li b{font-weight:600;color:var(--fg);display:block}
+.sug li span{color:var(--fg2);font-size:var(--t-micro)}
+.sug li.act{background:var(--bg2)}
 .pin{display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;font-weight:700;font-size:12px;background:var(--fg);color:var(--bg)}
 .res{margin-top:10px;border-top:1px solid var(--line2);padding-top:10px;display:none}
 .res.on{display:block}
@@ -149,8 +157,8 @@ footer{padding:26px 0 40px;color:var(--fg2);font-size:var(--t-micro);border-top:
       <div class="modes" role="group" aria-label="Kind of walk"><button type="button" data-m="flat" aria-pressed="true">Flattest</button><button type="button" data-m="hilly" aria-pressed="false">Hilliest</button></div>
       <p id="hint">Click the map for a starting point, then again for where you're going. Or type two addresses.</p>
       <div class="ends">
-        <span class="pin">A</span><input id="fromBox" placeholder="From: an address or place" autocomplete="off">
-        <span class="pin">B</span><input id="toBox" placeholder="To: an address or place" autocomplete="off">
+        <span class="pin">A</span><div class="ac"><input id="fromBox" placeholder="From: an address or place" autocomplete="off" spellcheck="false"></div>
+        <span class="pin">B</span><div class="ac"><input id="toBox" placeholder="To: an address or place" autocomplete="off" spellcheck="false"></div>
       </div>
       <div class="res" id="res">
         <div class="rrow"><i class="sw" id="altSw" style="background:var(--lilac)"></i><div><b id="altName">Flattest</b> <span id="rAlt"></span></div></div>
@@ -725,25 +733,93 @@ function clicks(){
     } else if (setEnd('B', ev.lngLat.lng, ev.lngLat.lat)) solve();
   });
   document.getElementById('clearBtn').addEventListener('click', () => clearRoute(false));
+  const GS = 'https://geosearch.planninglabs.nyc/v2/';
+  const label = ft => { const p = ft.properties;
+    return p.name ? nice(p.name) + (p.borough ? ', ' + (p.borough === 'Bronx' ? 'the Bronx' : p.borough) : '') : p.label.replace(/, USA$/, ''); };
+  const pick = (which, ft) => {
+    const hint = document.getElementById('hint');
+    const [x, y] = ft.geometry.coordinates;
+    if (which === 'A' && B != null && A != null){ clearRoute(true); }
+    if (setEnd(which, x, y, label(ft))){
+      if (A != null && B != null) solve();
+      else {
+        map.flyTo({center:[x, y], zoom:15}); hint.textContent = which === 'A' ? 'Now the destination.' : 'Now the starting point.';
+        const other = document.getElementById(which === 'A' ? 'toBox' : 'fromBox');
+        if (!other.value) other.focus();
+      }
+    }
+  };
+  // the top match, for Enter without a highlighted suggestion
   const geo = async (box, which) => {
     const q = box.value.trim(); if (!q) return;
     const hint = document.getElementById('hint');
     try {
-      const r = await fetch('https://geosearch.planninglabs.nyc/v2/search?size=1&text=' + encodeURIComponent(q));
+      const r = await fetch(GS + 'search?size=1&text=' + encodeURIComponent(q));
       const j = await r.json();
       const ft = j.features && j.features[0];
       if (!ft){ hint.textContent = 'Couldn’t find “' + q + '” in New York City.'; return; }
-      const [x, y] = ft.geometry.coordinates;
-      if (which === 'A' && B != null && A != null){ clearRoute(true); }
-      if (setEnd(which, x, y, ft.properties.label.replace(/, USA$/, ''))){
-        if (A != null && B != null) solve();
-        else { map.flyTo({center:[x, y], zoom:15}); hint.textContent = which === 'A' ? 'Now the destination.' : 'Now the starting point.'; }
-      }
+      pick(which, ft);
     } catch (err){ hint.textContent = 'Address search isn’t responding. Click the map instead.'; }
   };
-  const fb = document.getElementById('fromBox'), tb = document.getElementById('toBox');
-  fb.addEventListener('keydown', ev => { if (ev.key === 'Enter') geo(fb, 'A'); });
-  tb.addEventListener('keydown', ev => { if (ev.key === 'Enter') geo(tb, 'B'); });
+  // suggestions as you type
+  const autocomplete = (box, which) => {
+    const list = document.createElement('ul');
+    list.className = 'sug'; list.id = box.id + 'List'; list.setAttribute('role', 'listbox');
+    box.parentNode.appendChild(list);
+    box.setAttribute('role', 'combobox'); box.setAttribute('aria-autocomplete', 'list');
+    box.setAttribute('aria-controls', list.id); box.setAttribute('aria-expanded', 'false');
+    let items = [], active = -1, timer = 0, seq = 0;
+    const close = () => { list.innerHTML = ''; list.classList.remove('on'); items = []; active = -1; box.setAttribute('aria-expanded', 'false'); box.removeAttribute('aria-activedescendant'); };
+    const mark = i => {
+      active = i;
+      list.querySelectorAll('li').forEach((li, k) => li.classList.toggle('act', k === i));
+      if (i >= 0) box.setAttribute('aria-activedescendant', list.id + i); else box.removeAttribute('aria-activedescendant');
+    };
+    const choose = i => { const ft = items[i]; if (!ft) return; box.value = label(ft); close(); pick(which, ft); };
+    const show = feats => {
+      items = feats; active = -1;
+      if (!feats.length){ close(); return; }
+      list.innerHTML = feats.map((ft, i) => '<li role="option" id="' + list.id + i + '"><b></b><span></span></li>').join('');
+      list.querySelectorAll('li').forEach((li, i) => {
+        const p = feats[i].properties;
+        li.querySelector('b').textContent = p.name ? nice(p.name) : label(feats[i]);
+        li.querySelector('span').textContent = [p.neighbourhood, p.borough].filter(Boolean).join(', ');
+        li.addEventListener('mousedown', ev => { ev.preventDefault(); choose(i); });
+        li.addEventListener('mousemove', () => { if (active !== i) mark(i); });
+      });
+      list.classList.add('on'); box.setAttribute('aria-expanded', 'true');
+    };
+    box.addEventListener('input', () => {
+      clearTimeout(timer);
+      const q = box.value.trim();
+      if (q.length < 3){ close(); return; }
+      timer = setTimeout(async () => {
+        const my = ++seq;
+        try {
+          const r = await fetch(GS + 'autocomplete?text=' + encodeURIComponent(q));
+          const j = await r.json();
+          if (my !== seq || document.activeElement !== box) return;   // a newer keystroke won, or the box lost focus
+          const seen = new Set();
+          show((j.features || []).filter(ft => {   // one row per spot: "Broadway" and "B'way" are the same building
+            const c = ft.geometry.coordinates, k = c[0].toFixed(4) + ',' + c[1].toFixed(4);
+            if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 6));
+        } catch (err){ close(); }
+      }, 180);
+    });
+    box.addEventListener('keydown', ev => {
+      if (ev.key === 'ArrowDown' && items.length){ ev.preventDefault(); mark((active + 1) % items.length); }
+      else if (ev.key === 'ArrowUp' && items.length){ ev.preventDefault(); mark(active <= 0 ? items.length - 1 : active - 1); }
+      else if (ev.key === 'Escape'){ close(); }
+      else if (ev.key === 'Enter'){
+        ev.preventDefault();
+        if (active >= 0) choose(active);
+        else { clearTimeout(timer); seq++; close(); geo(box, which); }
+      }
+    });
+    box.addEventListener('blur', () => setTimeout(close, 120));
+  };
+  autocomplete(document.getElementById('fromBox'), 'A');
+  autocomplete(document.getElementById('toBox'), 'B');
 }
 function clearRoute(keepHint){
   A = B = null; if (mA) mA.remove(); if (mB) mB.remove(); mA = mB = null;
