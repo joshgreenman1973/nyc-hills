@@ -1,6 +1,6 @@
 # Uphill: methodology
 
-Uphill grades every walkable block in New York City from a federal lidar survey and finds the flattest walk between any two points. All figures below were computed on Nov. 23, 2026, by `build.py` in this repository. Rerun `fetch_dem.py` and `build.py` to reproduce them.
+Uphill grades every walkable block in New York City from a federal lidar survey and finds the flattest or the hilliest walk between any two points. All figures below were computed on Nov. 23, 2026, by `build.py` in this repository. Rerun `fetch_dem.py` and `build.py` to reproduce them.
 
 ## Sources
 
@@ -80,10 +80,11 @@ The filters don't catch everything, especially where a street runs alongside a s
 
 ## How walks are chosen
 
-The walking network is the graph of pieces, joined where they share an end. Each click or address snaps to the nearest piece end within 600 meters. Two routes are found with Dijkstra's algorithm:
+The walking network is the graph of pieces, joined where they share an end. Each click or address snaps to the nearest piece end within 600 meters. Routes are found with Dijkstra's algorithm. The page always shows the shortest walk, plus the flattest or the hilliest, whichever the reader picks:
 
 - **Shortest:** cost = length.
 - **Flattest:** cost = length × (1 + (grade ÷ 5%)²). A 2% block costs 1.16 times its length, a 5% block twice, a 10% block five times. Step streets cost 40 times their length, so the route avoids stairs unless there's no way around. Bridges and other ungraded pieces cost their length.
+- **Hilliest:** the walk with the most total climb whose length is no more than the larger of 1.5 times the shortest walk and the shortest walk plus 400 meters. A cheaper cost for steep blocks alone barely changes routes (tested Nov. 24, 2026, on 93 sample walks in hilly and flat neighborhoods: fewer than one in six detoured, by about 3%), because a detour to a hill adds flat blocks that outweigh the discount. So the page searches outward from both ends, with each piece costing length × (0.4 + 0.6 ÷ (1 + (grade ÷ 5%)²)) (a 5% block 0.7 times its length, a 10% block 0.52 times), keeping the real length, rise and fall along every search path. Each corner both searches reach within the length limit is a candidate waypoint; its climb is the rise from the start to the corner plus the rise from the corner on to the end. The page takes the candidate with the most climb whose two halves share no block, so the walk never doubles back down a dead end. Step streets are treated like any other block. On the same 93 sample walks the hilliest walk had a median of twice the climb of the shortest, at a median of 1.45 times the length.
 
 The route summary reports distance, total climb (the sum of rises along the route in the direction of travel), the steepest piece at least 20 meters long, and the number of step streets used. Staten Island has no walkable link to the other boroughs (the Verrazzano-Narrows Bridge is closed to pedestrians, and the ferry isn't in the network), so routes can't cross between them.
 

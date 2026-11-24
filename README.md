@@ -1,6 +1,6 @@
 # Uphill
 
-Every walkable block in New York City colored by how steep it is, measured from a federal lidar survey, with a router that finds the flattest walk between any two points.
+Every walkable block in New York City colored by how steep it is, measured from a federal lidar survey, with a router that finds the flattest or the hilliest walk between any two points.
 
 - Streets: NYC Street Centerline (CSCL), NYC Open Data inkn-q76z
 - Elevation: USGS 3D Elevation Program, one-meter bare-earth model from the 2013–14 New York CMGP Sandy lidar
