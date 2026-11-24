@@ -5,12 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Uphill</title>
 <meta name="description" content="Every walkable block in New York City colored by how steep it is, measured from federal lidar elevation data, with a router that finds the flattest or the hilliest walk between any two points.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <style>
-/* House system v5, black. Tokens copied from experiments/house-style/house.css. */
+/* House system v5, black. Colors copied from experiments/house-style/house.css; type set in Helvetica for this page. */
 :root{
   --bg:#111311; --bg2:#1b1e1b; --fg:#f2f3ef; --fg2:#a2a8a1;
   --line:#3a3f3a; --line2:#262a26; --grid:rgba(255,255,255,.13);
@@ -18,8 +15,8 @@
   --rose:#ff6fae; --cyan:#3cc8d8; --orange:#ff9f2e; --lilac:#b79bff;
   --accent:var(--orange);
   --flat:#3f4740; --night:#0b0c0b;
-  --sans:'Karla',system-ui,-apple-system,sans-serif;
-  --display:'Archivo',system-ui,sans-serif;
+  --sans:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --display:'Helvetica Neue',Helvetica,Arial,sans-serif;
   --t-micro:13px; --t-small:14px; --t-body:17px;
   --t-find:clamp(1.2rem,1.9vw,1.55rem);
   --t-h1:clamp(1.9rem,3.2vw,2.6rem);
@@ -35,7 +32,7 @@ button,input{font:inherit;color:inherit}
 
 header{padding:22px 0 26px}
 .topline{display:flex;justify-content:space-between;gap:16px;font-size:var(--t-micro);color:var(--fg2);padding-bottom:28px;border-bottom:1px solid var(--line2);margin-bottom:26px}
-h1{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;font-size:var(--t-h1);line-height:1.05;margin:0 0 14px;letter-spacing:-.01em}
+h1{font-family:var(--display);font-weight:700;font-size:var(--t-h1);line-height:1.05;margin:0 0 14px;letter-spacing:-.02em}
 .finding{font-size:var(--t-find);line-height:1.35;margin:0 0 14px;max-width:46ch}
 .lede{color:var(--fg2);max-width:70ch;margin:0}
 .lede strong{color:var(--fg);font-weight:600}
@@ -45,7 +42,7 @@ h1{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;
 #map{position:absolute;inset:0}
 .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg2);font-size:var(--t-small);z-index:5;pointer-events:none}
 .panel{position:absolute;z-index:4;left:16px;top:16px;width:min(360px,calc(100% - 32px));background:rgba(11,12,11,.92);border:1px solid var(--line);padding:14px 16px 12px}
-.panel h2{font-family:var(--display);font-variation-settings:'wdth' 80;font-weight:650;font-size:1.15rem;margin:0 0 4px;line-height:1.15}
+.panel h2{font-family:var(--display);font-weight:700;letter-spacing:-.01em;font-size:1.15rem;margin:0 0 4px;line-height:1.15}
 .panel p{margin:0;font-size:var(--t-small);color:var(--fg2);line-height:1.45}
 .ends{display:grid;grid-template-columns:auto 1fr;gap:6px 8px;align-items:center;margin:10px 0 2px}
 .ends label{font-size:var(--t-small);color:var(--fg2)}
@@ -103,7 +100,7 @@ h1{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;
 
 /* sections below */
 section{padding:46px 0 10px}
-h3{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:700;font-size:1.45rem;margin:0 0 8px;line-height:1.15}
+h3{font-family:var(--display);font-weight:700;letter-spacing:-.015em;font-size:1.45rem;margin:0 0 8px;line-height:1.15}
 section > .wrap > p{max-width:70ch;color:var(--fg2);margin:0 0 18px}
 section > .wrap > p strong{color:var(--fg);font-weight:600}
 .boros{display:grid;grid-template-columns:150px 1fr 80px;gap:10px 16px;align-items:center;max-width:900px}
@@ -124,7 +121,7 @@ section > .wrap > p strong{color:var(--fg);font-weight:600}
 .tops .bn{color:var(--fg2);font-size:var(--t-small)}
 .tops button{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-weight:600;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
 #method{padding-bottom:40px}
-#method h4{font-family:var(--display);font-variation-settings:'wdth' 88;font-weight:650;font-size:1.05rem;margin:22px 0 6px}
+#method h4{font-family:var(--display);font-weight:700;font-size:1.05rem;margin:22px 0 6px}
 #method p,#method li{max-width:72ch;color:var(--fg2);font-size:var(--t-small);line-height:1.6}
 #method ul{padding-left:18px;margin:0}
 #method code{font-size:.92em;color:var(--fg)}
